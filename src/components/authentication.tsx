@@ -1,3 +1,5 @@
+"use client"
+
 import {
   CardTitle,
   CardDescription,
@@ -9,19 +11,34 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { FC } from "react"
+import { FC, useState } from "react"
+import { createBrowserClient } from "@supabase/ssr"
 
 export interface AuthenticationProps {
   type: "login" | "signup"
 }
 
-export const authentication: FC<AuthenticationProps> = ({ type }) => {
+const Authentication: FC<AuthenticationProps> = ({ type }) => {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
   const handleClickLogin = () => {
-    console.log("login")
+    supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
   }
 
   const handleClickSignup = () => {
-    console.log("signup")
+    supabase.auth.signUp({
+      email,
+      password,
+    })
   }
 
   return (
@@ -35,28 +52,46 @@ export const authentication: FC<AuthenticationProps> = ({ type }) => {
       <CardContent>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
-            <Input id="username" placeholder="astronaut" required />
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              placeholder="astronaut"
+              required
+              onChange={(event) => setEmail(event.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" required type="password" />
+            <Input
+              id="password"
+              required
+              type="password"
+              onChange={(event) => setPassword(event.target.value)}
+            />
           </div>
           {type === "login" && (
-            <Button className="w-full" type="submit">
+            <Button onClick={handleClickLogin} className="w-full" type="submit">
               Login
             </Button>
           )}
           {type === "signup" && (
-            <Button className="w-full" type="submit">
+            <Button
+              onClick={handleClickSignup}
+              className="w-full"
+              type="submit"
+            >
               Signup
             </Button>
           )}
         </div>
         <div className="mt-4 text-center text-sm">
-          {type === "login" && <Button>Forgot your password?</Button>}
+          {type === "login" && (
+            <Link className="underline" href="/signup">
+              Don&apos;t have an account? Signup here.
+            </Link>
+          )}
           {type === "signup" && (
-            <Link className="underline" href="#">
+            <Link className="underline" href="/login">
               Have an account? Login here.
             </Link>
           )}
@@ -65,3 +100,5 @@ export const authentication: FC<AuthenticationProps> = ({ type }) => {
     </Card>
   )
 }
+
+export default Authentication
