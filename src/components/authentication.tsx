@@ -1,5 +1,3 @@
-"use client"
-
 import {
   CardTitle,
   CardDescription,
@@ -11,34 +9,56 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { FC, useState } from "react"
-import { createBrowserClient } from "@supabase/ssr"
+import { FC } from "react"
+import { createClient } from "@/utils/supabase/server"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
 
 export interface AuthenticationProps {
   type: "login" | "signup"
 }
 
 const Authentication: FC<AuthenticationProps> = ({ type }) => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const handleSubmitLogin = async (formData: FormData) => {
+    "use server"
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+    const email = formData.get("email") as string
+    const password = formData.get("password") as string
+    const supabase = createClient()
 
-  const handleClickLogin = () => {
-    supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
+
+    if (error) {
+      return redirect("/login?message=Could not authenticate user")
+    }
+
+    return redirect("/protected")
   }
 
-  const handleClickSignup = () => {
-    supabase.auth.signUp({
+  const handleSubmitSignup = async (formData: FormData) => {
+    "use server"
+
+    const origin = headers().get("origin")
+    const email = formData.get("email") as string
+    const password = formData.get("password") as string
+    const supabase = createClient()
+
+    const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${origin}/auth/callback`,
+      },
     })
+
+    if (error) {
+      return redirect("/login?message=Could not authenticate user")
+    }
+
+    return redirect("/login?message=Check email to continue sign in process")
   }
 
   return (
@@ -50,40 +70,34 @@ const Authentication: FC<AuthenticationProps> = ({ type }) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <form className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              placeholder="astronaut"
-              required
-              onChange={(event) => setEmail(event.target.value)}
-            />
+            <Input id="email" placeholder="astronaut" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              required
-              type="password"
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <Input id="password" required type="password" />
           </div>
           {type === "login" && (
-            <Button onClick={handleClickLogin} className="w-full" type="submit">
+            <Button
+              formAction={handleSubmitLogin}
+              className="w-full"
+              type="submit"
+            >
               Login
             </Button>
           )}
           {type === "signup" && (
             <Button
-              onClick={handleClickSignup}
               className="w-full"
               type="submit"
+              formAction={handleSubmitSignup}
             >
               Signup
             </Button>
           )}
-        </div>
+        </form>
         <div className="mt-4 text-center text-sm">
           {type === "login" && (
             <Link className="underline" href="/signup">
