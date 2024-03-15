@@ -10,8 +10,24 @@ import {
   Popover,
 } from "@/components/ui/popover"
 import Image from "next/image"
+import { createClient } from "@/utils/supabase/server"
+import { redirect } from "next/navigation"
 
-export function NavMenu() {
+export async function NavMenu() {
+  const supabase = createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const isLoggedIn = user !== null
+
+  const handleLogout = async () => {
+    "use server"
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    return redirect("/")
+  }
   return (
     <nav className="sticky top-0 z-10 backdrop-blur-md shadow">
       <div className="flex items-center justify-between h-14 px-4 border-b md:px-6 bg-opacity-70 backdrop-filter backdrop-blur-lg">
@@ -19,46 +35,54 @@ export function NavMenu() {
           Traders of Space
         </Link>
         <div className="flex items-center gap-4">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                className="rounded-full w-8 h-8 border-2 border-gray-100"
-                size="icon"
-                variant="ghost"
-              >
-                <Image
-                  alt="Avatar"
-                  className="rounded-full"
-                  height="32"
-                  src="/astronaut.jpeg"
-                  style={{
-                    aspectRatio: "32/32",
-                    objectFit: "cover",
-                  }}
-                  width="32"
-                />
-                <span className="sr-only">Toggle user menu</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="mt-1 w-48">
-              <div>
-                <Link
-                  className="group flex items-center w-full px-3 py-1 text-sm rounded-md bg-gray-100/50 translate-y-0.5  dark:bg-gray-800/50"
-                  href="/profile"
+          {isLoggedIn ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  className="rounded-full w-8 h-8 border-2 border-gray-100"
+                  size="icon"
+                  variant="ghost"
                 >
-                  Profile
-                </Link>
-              </div>
-              <div>
-                <Link
-                  className="group flex items-center w-full px-3 py-1 text-sm rounded-md bg-white hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-50"
-                  href="#"
-                >
-                  Sign out
-                </Link>
-              </div>
-            </PopoverContent>
-          </Popover>
+                  <Image
+                    alt="Avatar"
+                    className="rounded-full select-none pointer-events-none"
+                    height="32"
+                    src="/astronaut.jpeg"
+                    style={{
+                      aspectRatio: "32/32",
+                      objectFit: "cover",
+                    }}
+                    width="32"
+                  />
+                  <span className="sr-only">Toggle user menu</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="mt-1 w-48">
+                <div>
+                  <Link
+                    className="group flex items-center w-full px-3 py-1 text-sm rounded-md bg-gray-100/50 translate-y-0.5  dark:bg-gray-800/50"
+                    href="/profile"
+                  >
+                    Profile
+                  </Link>
+                </div>
+                <div>
+                  <form action={handleLogout}>
+                    <button className="group flex items-center w-full px-3 py-1 text-sm rounded-md bg-white hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-50">
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <Link
+              className="px-3 py-1 text-sm rounded-md bg-gray-100/50 dark:bg-gray-800/50"
+              href="/login"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
     </nav>

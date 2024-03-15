@@ -1,3 +1,4 @@
+"use server"
 import {
   CardTitle,
   CardDescription,
@@ -18,7 +19,7 @@ export interface AuthenticationProps {
   type: "login" | "signup"
 }
 
-const Authentication: FC<AuthenticationProps> = ({ type }) => {
+const Authentication: FC<AuthenticationProps> = async ({ type }) => {
   const handleSubmitLogin = async (formData: FormData) => {
     "use server"
 
@@ -35,7 +36,7 @@ const Authentication: FC<AuthenticationProps> = ({ type }) => {
       return redirect("/login?message=Could not authenticate user")
     }
 
-    return redirect("/protected")
+    return redirect("/profile")
   }
 
   const handleSubmitSignup = async (formData: FormData) => {
@@ -55,10 +56,10 @@ const Authentication: FC<AuthenticationProps> = ({ type }) => {
     })
 
     if (error) {
-      return redirect("/login?message=Could not authenticate user")
+      return redirect("/signup?message=Could not authenticate user")
     }
 
-    return redirect("/login?message=Check email to continue sign in process")
+    return redirect("/signup?message=Check email to continue sign in process")
   }
 
   return (
@@ -73,11 +74,11 @@ const Authentication: FC<AuthenticationProps> = ({ type }) => {
         <form className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" placeholder="astronaut" required />
+            <Input id="email" name="email" placeholder="astronaut" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" required type="password" />
+            <Input id="password" name="password" required type="password" />
           </div>
           {type === "login" && (
             <Button
